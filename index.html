@@ -113,16 +113,41 @@
                 </div>
                 <p x-show="modalIA.cargando" class="text-sm opacity-70" role="status">Preparando el estudio…</p>
                 <p x-show="modalIA.error" x-text="modalIA.error" class="text-sm text-red-700" role="alert"></p>
-                <div x-show="modalIA.texto" x-text="modalIA.texto" class="flex-1 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed"></div>
+                <div x-show="modalIA.texto" x-text="modalIA.texto" class="flex-1 order-3 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed"></div>
                 <img x-show="modalIA.imagen" :src="modalIA.imagen ? `data:image/png;base64,${modalIA.imagen}` : ''" alt="Infografía generada a partir del estudio" class="mt-3 max-h-[45vh] w-full rounded-xl object-contain">
-                <div x-show="modalIA.texto || modalIA.imagen" class="flex gap-2 mt-4">
+                <div x-show="modalIA.texto || modalIA.imagen" class="order-4 flex gap-2 mt-4">
                     <button @click="compartirResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-share-nodes mr-1"></i> Compartir</button>
-                    <button x-show="modalIA.texto" @click="copiarResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-copy mr-1"></i> <span x-text="modalIA.titulo === 'Prompt para infografía' ? 'Copiar prompt' : 'Copiar texto'"></span></button>
+                    <button x-show="modalIA.texto" @click="copiarResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-copy mr-1"></i> <span x-text="modalIA.titulo === 'Prompt para imagen Instagram' ? 'Copiar prompt' : 'Copiar texto'"></span></button>
                     <a x-show="modalIA.imagen" :href="modalIA.imagen ? `data:image/png;base64,${modalIA.imagen}` : '# '" download="estudio-biblico.png" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-download mr-1"></i> Imagen</a>
                 </div>
-                <div x-show="modalIA.titulo === 'Prompt para infografía'" class="grid grid-cols-2 gap-2 mt-2">
+                <div x-show="modalIA.titulo === 'Prompt para imagen Instagram'" class="order-5 grid grid-cols-2 gap-2 mt-2">
                     <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Abrir Gemini</a>
                     <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Abrir ChatGPT</a>
+                </div>
+                <div x-show="modalIA.titulo === 'Prompt para imagen Instagram'" class="order-2 shrink-0 space-y-3 mb-3 max-h-[34vh] overflow-y-auto pr-1">
+                    <div>
+                        <label for="estilo-imagen" class="block text-[10px] font-bold uppercase opacity-60 mb-1">Estilo visual</label>
+                        <select id="estilo-imagen" x-model="estiloInfografiaSeleccionado" @change="actualizarPromptInfografia()" :class="temaInput" class="w-full p-2.5 rounded-xl border-0 ring-1 ring-inset ring-black/10 focus:ring-2 text-xs">
+                            <template x-for="estilo in estilosInfografia" :key="estilo.nombre">
+                                <option :value="estilo.nombre" x-text="estilo.nombre"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <p class="block text-[10px] font-bold uppercase opacity-60 mb-1">Paleta de color</p>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="paleta in paletasInfografia" :key="paleta.nombre">
+                                <button @click="paletaInfografiaSeleccionada = paleta.nombre; actualizarPromptInfografia()" type="button" :aria-label="`Paleta ${paleta.nombre}`" :aria-pressed="paletaInfografiaSeleccionada === paleta.nombre" class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-[10px] font-bold" :class="paletaInfografiaSeleccionada === paleta.nombre ? 'border-amber-700 bg-amber-50 text-amber-900 ring-1 ring-amber-700' : 'border-black/10 bg-white/60'">
+                                    <span class="flex gap-0.5">
+                                        <template x-for="color in paleta.colores" :key="color">
+                                            <span class="w-3 h-3 rounded-full border border-black/10" :style="`background-color: ${color}`"></span>
+                                        </template>
+                                    </span>
+                                    <span x-text="paleta.nombre"></span>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -916,6 +941,27 @@
                 // Modal Versículo
                 modalVersiculo: { open: false, cita: '', versionActiva: 'RV1960' },
                 modalIA: { open: false, titulo: '', cargando: false, error: '', texto: '', imagen: null },
+                estiloInfografiaSeleccionado: 'Aesthetic editorial',
+                estilosInfografia: [
+                    { nombre: 'Aesthetic editorial', descripcion: 'composición editorial aesthetic, texturas delicadas, detalles de scrapbook y jerarquía tipográfica cuidada' },
+                    { nombre: 'Minimalista', descripcion: 'diseño minimalista, mucho espacio negativo, formas simples y líneas limpias' },
+                    { nombre: 'Ilustrado a mano', descripcion: 'ilustración hand-drawn, trazos orgánicos, tinta visible y textura sutil de papel' },
+                    { nombre: 'Collage de journaling', descripcion: 'collage de journaling con recortes de papel, cinta decorativa y notas manuscritas breves' },
+                    { nombre: 'Acuarela', descripcion: 'ilustración en acuarela con bordes suaves, pigmentos translúcidos y papel texturizado' },
+                    { nombre: 'Vintage grabado', descripcion: 'estética de grabado antiguo, líneas finas, ornamentos botánicos y apariencia de imprenta clásica' },
+                    { nombre: 'Cinemático', descripcion: 'composición cinematográfica, luz dramática, profundidad visual y contraste expresivo' },
+                    { nombre: 'Tipográfico moderno', descripcion: 'diseño tipográfico moderno, formas geométricas y jerarquía visual atrevida' }
+                ],
+                paletaInfografiaSeleccionada: 'Pasteles',
+                paletasInfografia: [
+                    { nombre: 'Pasteles', descripcion: 'pasteles suaves: rosa empolvado, lavanda, amarillo mantequilla y celeste', colores: ['#E9B8C8', '#C9BCE8', '#F3D98B', '#B8D8E8'] },
+                    { nombre: 'Tonos tierra', descripcion: 'tonos tierra: terracota, arcilla, arena y verde oliva', colores: ['#A64B32', '#C77B54', '#D9BE99', '#66704F'] },
+                    { nombre: 'Blanco y negro', descripcion: 'blanco, negro y grises, con alto contraste y sin otros colores', colores: ['#171717', '#777777', '#E7E5E4', '#FFFFFF'] },
+                    { nombre: 'Vibrante', descripcion: 'colores vibrantes: coral, fucsia, amarillo y azul eléctrico, con contraste equilibrado', colores: ['#F45B69', '#D946A6', '#F4C542', '#4057D6'] },
+                    { nombre: 'Azul y dorado', descripcion: 'azul profundo, azul claro, dorado y marfil', colores: ['#172554', '#3973A5', '#D4AF37', '#F6F0DF'] },
+                    { nombre: 'Bosque sereno', descripcion: 'verdes salvia, musgo y bosque con acentos crema', colores: ['#A3B18A', '#6B705C', '#344E41', '#F2E8CF'] }
+                ],
+                entradaInfografia: { contexto: '', texto: '' },
                 mensajeRespaldo: '',
                 modoImportacionRespaldo: 'agregar',
                 mensajeGuardado: '',
@@ -1156,17 +1202,16 @@
                         return;
                     }
                     if (accion === 'infographic') {
-                        const contenido = contexto
-                            ? `Referencia bíblica o contexto: ${contexto.trim()}\n\nNotas aprendidas:\n${String(texto).trim()}`
-                            : `Notas aprendidas:\n${String(texto).trim()}`;
+                        this.entradaInfografia = { contexto: String(contexto || '').trim(), texto: String(texto).trim() };
                         this.modalIA = {
                             open: true,
-                            titulo: 'Prompt para infografía',
+                            titulo: 'Prompt para imagen Instagram',
                             cargando: false,
                             error: '',
-                            texto: `Crea una infografía bíblica en español, clara y fácil de leer en un teléfono. Usa un título breve, una jerarquía visual ordenada y una paleta sobria. Resume las ideas principales y una aplicación práctica sin cambiar el sentido de las notas. Conserva exactamente las referencias bíblicas; no inventes versículos, citas ni datos.\n\n${contenido}\n\nEvita párrafos largos y texto decorativo ilegible.`,
+                            texto: '',
                             imagen: null
                         };
+                        this.actualizarPromptInfografia();
                         return;
                     }
                     this.modalIA = { open: true, titulo: acciones[accion] || 'Estudio con IA', cargando: true, error: '', texto: '', imagen: null };
@@ -1191,6 +1236,21 @@
                     } finally {
                         this.modalIA.cargando = false;
                     }
+                },
+                actualizarPromptInfografia() {
+                    const estilo = this.estilosInfografia.find(opcion => opcion.nombre === this.estiloInfografiaSeleccionado);
+                    const paleta = this.paletasInfografia.find(opcion => opcion.nombre === this.paletaInfografiaSeleccionada);
+                    const referencia = this.entradaInfografia.contexto
+                        ? `Referencia o contexto: ${this.entradaInfografia.contexto}`
+                        : 'Sin referencia bíblica especificada.';
+
+                    this.modalIA.texto = [
+                        'Genera y entrega una imagen final, no una explicación ni una descripción. Debe ser una pieza visual bíblica en español, vertical 4:5, resolución 1080 x 1350 px, lista para publicar en el feed de Instagram.',
+                        'Organiza la enseñanza con un título breve, pocas frases grandes y legibles, y una composición clara. Mantén todo el texto dentro de márgenes seguros. Conserva exactamente las referencias bíblicas proporcionadas; no inventes citas ni atribuyas al texto bíblico frases que no estén en las notas.',
+                        `Estilo visual: ${estilo?.descripcion || 'estética editorial cuidada'}.`,
+                        `Paleta de color: ${paleta?.descripcion || 'colores armoniosos y de alto contraste'}.`,
+                        `${referencia}\nNotas aprendidas: ${this.entradaInfografia.texto}`
+                    ].join('\n\n');
                 },
                 async copiarResultadoIA() {
                     try {
