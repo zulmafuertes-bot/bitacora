@@ -1063,7 +1063,7 @@
                     const { data, error } = await this.clienteSupabase.auth.signUp({
                         email: this.authEmail.trim(),
                         password: this.authPassword,
-                        options: { data: { display_name: this.authNombre.trim() }, emailRedirectTo: window.location.origin }
+                        options: { data: { display_name: this.authNombre.trim() }, emailRedirectTo: new URL('./', window.location.href).href }
                     });
                     this.mensajeCuenta = error ? error.message : data.session
                         ? 'Cuenta creada e iniciada.'
