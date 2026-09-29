@@ -126,6 +126,14 @@
                 </div>
                 <div x-show="modalIA.titulo === 'Prompt para imagen Instagram'" class="order-2 shrink-0 space-y-3 mb-3 max-h-[34vh] overflow-y-auto pr-1">
                     <div>
+                        <label for="formato-imagen" class="block text-[10px] font-bold uppercase opacity-60 mb-1">Formato y proporción</label>
+                        <select id="formato-imagen" x-model="formatoImagenSeleccionado" @change="actualizarPromptInfografia()" :class="temaInput" class="w-full p-2.5 rounded-xl border-0 ring-1 ring-inset ring-black/10 focus:ring-2 text-xs">
+                            <template x-for="formato in formatosImagen" :key="formato.nombre">
+                                <option :value="formato.nombre" x-text="`${formato.nombre} · ${formato.relacion}`"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
                         <label for="estilo-imagen" class="block text-[10px] font-bold uppercase opacity-60 mb-1">Estilo visual</label>
                         <select id="estilo-imagen" x-model="estiloInfografiaSeleccionado" @change="actualizarPromptInfografia()" :class="temaInput" class="w-full p-2.5 rounded-xl border-0 ring-1 ring-inset ring-black/10 focus:ring-2 text-xs">
                             <template x-for="estilo in estilosInfografia" :key="estilo.nombre">
@@ -941,6 +949,15 @@
                 // Modal Versículo
                 modalVersiculo: { open: false, cita: '', versionActiva: 'RV1960' },
                 modalIA: { open: false, titulo: '', cargando: false, error: '', texto: '', imagen: null },
+                formatoImagenSeleccionado: 'Instagram feed vertical',
+                formatosImagen: [
+                    { nombre: 'Instagram feed vertical', relacion: '4:5', resolucion: '1080 x 1350 px', destino: 'publicación vertical para el feed de Instagram' },
+                    { nombre: 'Publicación cuadrada', relacion: '1:1', resolucion: '1080 x 1080 px', destino: 'publicación cuadrada para redes sociales' },
+                    { nombre: 'Historia o Reel', relacion: '9:16', resolucion: '1080 x 1920 px', destino: 'historia o portada vertical de Reel' },
+                    { nombre: 'Publicación horizontal', relacion: '1.91:1', resolucion: '1200 x 628 px', destino: 'publicación horizontal para redes sociales' },
+                    { nombre: 'Video o miniatura', relacion: '16:9', resolucion: '1920 x 1080 px', destino: 'miniatura o portada de video horizontal' },
+                    { nombre: 'Pinterest vertical', relacion: '2:3', resolucion: '1000 x 1500 px', destino: 'pin vertical para Pinterest' }
+                ],
                 estiloInfografiaSeleccionado: 'Aesthetic editorial',
                 estilosInfografia: [
                     { nombre: 'Aesthetic editorial', descripcion: 'composición editorial aesthetic, texturas delicadas, detalles de scrapbook y jerarquía tipográfica cuidada' },
@@ -1238,6 +1255,7 @@
                     }
                 },
                 actualizarPromptInfografia() {
+                    const formato = this.formatosImagen.find(opcion => opcion.nombre === this.formatoImagenSeleccionado);
                     const estilo = this.estilosInfografia.find(opcion => opcion.nombre === this.estiloInfografiaSeleccionado);
                     const paleta = this.paletasInfografia.find(opcion => opcion.nombre === this.paletaInfografiaSeleccionada);
                     const referencia = this.entradaInfografia.contexto
@@ -1245,7 +1263,8 @@
                         : 'Sin referencia bíblica especificada.';
 
                     this.modalIA.texto = [
-                        'Genera y entrega una imagen final, no una explicación ni una descripción. Debe ser una pieza visual bíblica en español, vertical 4:5, resolución 1080 x 1350 px, lista para publicar en el feed de Instagram.',
+                        'Genera y entrega una imagen final, no una explicación ni una descripción. Debe ser una pieza visual bíblica en español, lista para publicar.',
+                        `Formato: ${formato?.destino || 'publicación digital'}. Relación de aspecto ${formato?.relacion || '4:5'} y resolución objetivo ${formato?.resolucion || '1080 x 1350 px'}. Conserva la proporción aunque la herramienta use una resolución cercana.`,
                         'Organiza la enseñanza con un título breve, pocas frases grandes y legibles, y una composición clara. Mantén todo el texto dentro de márgenes seguros. Conserva exactamente las referencias bíblicas proporcionadas; no inventes citas ni atribuyas al texto bíblico frases que no estén en las notas.',
                         `Estilo visual: ${estilo?.descripcion || 'estética editorial cuidada'}.`,
                         `Paleta de color: ${paleta?.descripcion || 'colores armoniosos y de alto contraste'}.`,
