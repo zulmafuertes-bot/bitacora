@@ -1,6 +1,6 @@
 # Backend privado para Bitácora Biblia
 
-La app conserva `localStorage` cuando no hay sesión. Con Supabase configurado, las entradas nuevas se sincronizan al espacio compartido y cada una queda atribuida al usuario autenticado. Las tablas usan Row Level Security; las claves secretas de OpenAI solo se usan dentro de la Edge Function.
+La app conserva `localStorage` cuando no hay sesión. Con Supabase configurado, las entradas nuevas se sincronizan al espacio compartido y cada una queda atribuida al usuario autenticado. Las tablas usan Row Level Security; la clave secreta de Gemini solo se usa dentro de la Edge Function.
 
 ## 1. Crear el proyecto
 
@@ -28,15 +28,17 @@ npx supabase db push
 
 `db push` crea perfiles, espacios, invitaciones, registros, índices, funciones y políticas RLS a partir de `supabase/migrations/20260929000000_initial.sql`.
 
-## 3. Configurar OpenAI y desplegar la función
+## 3. Configurar Gemini y desplegar la función
 
-Crea una API key de OpenAI desde su plataforma. No la pongas en `index.html`, `supabase-config.js`, ni la compartas en mensajes o comandos que queden en el historial de PowerShell. En Supabase Dashboard, abre Edge Functions > Secrets y agrega `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_IMAGE_MODEL` y `APP_ORIGIN` (`http://localhost:8000` en local). Configura la clave secreta directamente en el panel; nunca la envíes por este chat.
+Crea una API key en [Google AI Studio](https://aistudio.google.com/apikey). En Supabase Dashboard, abre Edge Functions > Secrets y agrega `GEMINI_API_KEY` junto con `APP_ORIGIN`. Guarda la clave directamente en el panel; no la pongas en `index.html`, `supabase-config.js`, GitHub ni mensajes. El nivel gratuito de Gemini tiene límites de uso y Google puede usar las solicitudes para mejorar sus productos; no envíes notas sensibles. Revisa los [precios y límites vigentes](https://ai.google.dev/gemini-api/docs/pricing).
+
+La app usa `gemini-2.5-flash` por defecto; `GEMINI_MODEL` es opcional. Para la app publicada, `APP_ORIGIN` debe ser `https://zulmafuertes-bot.github.io` (sin `/bitacora/`). La función permite un solo origen a la vez; cámbialo a `http://localhost:8000` solo durante pruebas locales. La generación de infografías requiere un modelo de imágenes de pago y queda desactivada.
 
 ```powershell
 npx supabase functions deploy ai-study
 ```
 
-Cuando publiques la app, cambia `APP_ORIGIN` por el origen exacto del sitio, por ejemplo `https://tu-dominio.example`, y vuelve a guardar el secreto. Supabase inyecta las variables `SUPABASE_URL` y la clave pública para el runtime de la función.
+Supabase inyecta las variables `SUPABASE_URL` y la clave pública para el runtime de la función.
 
 Para ejecución local de funciones, crea `supabase/functions/.env` basándote en `supabase/functions/.env.example` y usa `npx supabase start` y `npx supabase functions serve ai-study`. El archivo real `.env` está excluido de Git. `supabase start` necesita Docker.
 
@@ -52,6 +54,6 @@ Cada fila de `entries` guarda `created_by`, `updated_by`, `entry_date`, `type` y
 
 ## Privacidad y límites
 
-Las notas que envíes con los botones de IA se transmiten a OpenAI. La función usa `store: false`, no escribe las notas en otra tabla y limita cada cuenta a 30 solicitudes diarias. El uso personal puede ser no comercial, pero no elimina automáticamente las licencias de traducciones bíblicas: confirma que la fuente y versión seleccionadas permiten el uso que necesitas.
+Las notas que envíes con los botones de IA se transmiten a Google Gemini. La función no las escribe en otra tabla y limita cada cuenta a 30 solicitudes diarias; las cuotas del nivel gratuito de Google pueden ser menores y generar errores de límite. La generación de imágenes está desactivada para evitar el modelo de pago. El uso de IA no elimina automáticamente las licencias de traducciones bíblicas: confirma que la fuente y versión seleccionadas permiten el uso que necesitas.
 
 El respaldo JSON puede incluir oraciones y otra información personal. Guárdalo en un lugar privado. Los borradores sin guardar y las preferencias locales no se suben al historial compartido. Las etiquetas siguen siendo locales en esta primera versión.

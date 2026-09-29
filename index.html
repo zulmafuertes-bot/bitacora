@@ -1151,6 +1151,17 @@
                         this.mensajeGuardado = 'Escribe primero tus notas para poder analizarlas.';
                         return;
                     }
+                    if (accion === 'infographic') {
+                        this.modalIA = {
+                            open: true,
+                            titulo: 'Infografía no disponible',
+                            cargando: false,
+                            error: 'La generación de imágenes requiere un modelo de pago y está desactivada en esta configuración gratuita.',
+                            texto: '',
+                            imagen: null
+                        };
+                        return;
+                    }
                     this.modalIA = { open: true, titulo: acciones[accion] || 'Estudio con IA', cargando: true, error: '', texto: '', imagen: null };
                     if (!this.clienteSupabase || !this.usuarioSupabase || !this.espacioSupabase) {
                         this.modalIA.cargando = false;

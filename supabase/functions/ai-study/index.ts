@@ -7,7 +7,6 @@ const allowedActions = new Set([
   "rewrite",
   "exegesis",
   "theology",
-  "infographic",
 ]);
 
 const prompts: Record<string, string> = {
@@ -17,7 +16,6 @@ const prompts: Record<string, string> = {
   rewrite: "Corrige la redacción y ortografía en español, mejorando claridad y fluidez sin cambiar las ideas, el tono personal ni las referencias bíblicas.",
   exegesis: "Prepara una ayuda de estudio exegético en español. Explica contexto literario e histórico, estructura, términos relevantes solo cuando puedas sustentarlos, y distintas interpretaciones reconocidas. Distingue hechos, hipótesis y aplicaciones. No inventes datos de idiomas originales ni fuentes.",
   theology: "Revisa este aprendizaje teológicamente en español. Compara cada afirmación con el contexto bíblico citado, indica acuerdos, tensiones y posibles interpretaciones alternativas. No declares certeza donde haya desacuerdo entre tradiciones; incluye las referencias que deberían revisarse. Esto es una ayuda de estudio, no una autoridad pastoral.",
-  infographic: "Diseña una infografía editorial en español que resuma fielmente el aprendizaje. Usa pocas frases legibles, jerarquía clara, referencias bíblicas exactas y una composición limpia. No inventes versículos ni añadas texto decorativo ilegible.",
 };
 
 const corsHeaders = (origin: string) => ({
@@ -55,8 +53,8 @@ Deno.serve(async (request: Request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const publishableKeys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") || "{}");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || publishableKeys.default;
-  const openAiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!supabaseUrl || !supabaseAnonKey || !openAiKey) {
+  const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+  if (!supabaseUrl || !supabaseAnonKey || !geminiApiKey) {
     return Response.json({ error: "The AI service is not configured" }, { status: 503, headers });
   }
 
@@ -79,6 +77,9 @@ Deno.serve(async (request: Request) => {
   const action = body.action || "";
   const text = typeof body.text === "string" ? body.text.trim() : "";
   const spaceId = typeof body.spaceId === "string" ? body.spaceId : "";
+  if (action === "infographic") {
+    return Response.json({ error: "La generación de infografías requiere un modelo de imágenes de pago y está desactivada." }, { status: 501, headers });
+  }
   if (!allowedActions.has(action) || !text || text.length > 20000 || !spaceId) {
     return Response.json({ error: "Action, study text, or space is invalid" }, { status: 400, headers });
   }
@@ -99,57 +100,44 @@ Deno.serve(async (request: Request) => {
     return Response.json({ error: status === 429 ? "Daily AI limit reached" : "AI quota could not be checked" }, { status, headers });
   }
 
-  const requestBody: Record<string, unknown> = {
-    model: Deno.env.get("OPENAI_MODEL") || "gpt-4.1-mini",
-    input: [
-      { role: "system", content: prompts[action] },
-      { role: "user", content: text },
-    ],
-    max_output_tokens: action === "infographic" ? 1200 : 2400,
-    store: false,
+  const model = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+  const requestBody = {
+    systemInstruction: { parts: [{ text: prompts[action] }] },
+    contents: [{ role: "user", parts: [{ text }] }],
+    generationConfig: { maxOutputTokens: 2400 },
   };
-  if (action === "infographic") {
-    requestBody.tools = [{
-      type: "image_generation",
-      model: Deno.env.get("OPENAI_IMAGE_MODEL") || "gpt-image-1-mini",
-      size: "1024x1024",
-      quality: "low",
-    }];
-    requestBody.tool_choice = { type: "image_generation" };
-  }
 
-  let openAiResponse: Response;
+  let geminiResponse: Response;
   try {
-    openAiResponse = await fetch("https://api.openai.com/v1/responses", {
+    geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${openAiKey}`,
+        "x-goog-api-key": geminiApiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),
     });
   } catch {
-    return Response.json({ error: "Could not reach the AI provider" }, { status: 502, headers });
+    return Response.json({ error: "No se pudo conectar con Gemini" }, { status: 502, headers });
   }
 
-  if (!openAiResponse.ok) {
-    return Response.json({ error: "The AI provider rejected the request" }, { status: 502, headers });
+  if (!geminiResponse.ok) {
+    if (geminiResponse.status === 429) {
+      return Response.json({ error: "Se alcanzó el límite gratuito de Gemini. Inténtalo más tarde." }, { status: 429, headers });
+    }
+    return Response.json({ error: "Gemini rechazó la solicitud. Revisa la clave y el acceso al modelo." }, { status: 502, headers });
   }
 
-  const result = await openAiResponse.json();
-  const textOutput = Array.isArray(result.output)
-    ? result.output.flatMap((item: { content?: Array<{ type?: string; text?: string }> }) => item.content || [])
-      .filter((part: { type?: string }) => part.type === "output_text")
+  const result = await geminiResponse.json();
+  const textOutput = Array.isArray(result.candidates)
+    ? result.candidates.flatMap((candidate: { content?: { parts?: Array<{ text?: string }> } }) => candidate.content?.parts || [])
       .map((part: { text?: string }) => part.text || "")
       .join("\n")
     : "";
-  const imageOutput = action === "infographic" && Array.isArray(result.output)
-    ? result.output.find((item: { type?: string }) => item.type === "image_generation_call")?.result || null
-    : null;
 
-  if (!textOutput && !imageOutput) {
-    return Response.json({ error: "The AI provider returned no result" }, { status: 502, headers });
+  if (!textOutput) {
+    return Response.json({ error: "Gemini no devolvió texto; quizá bloqueó el contenido por seguridad." }, { status: 502, headers });
   }
 
-  return Response.json({ text: textOutput, image: imageOutput }, { headers });
+  return Response.json({ text: textOutput, image: null }, { headers });
 });
