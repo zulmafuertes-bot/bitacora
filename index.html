@@ -1263,7 +1263,20 @@
                         this.modalIA.imagen = data?.image || null;
                         if (!this.modalIA.texto && !this.modalIA.imagen) this.modalIA.error = 'La IA no devolvió un resultado.';
                     } catch (error) {
-                        this.modalIA.error = `No se pudo completar la solicitud: ${error.message}`;
+                        let detalle = error.message || 'Error desconocido';
+                        const respuesta = error.context;
+                        if (respuesta && typeof respuesta.clone === 'function') {
+                            try {
+                                const cuerpo = await respuesta.clone().json();
+                                detalle = cuerpo.error || cuerpo.message || detalle;
+                            } catch {
+                                try {
+                                    const texto = await respuesta.clone().text();
+                                    if (texto) detalle = texto;
+                                } catch {}
+                            }
+                        }
+                        this.modalIA.error = `No se pudo completar la solicitud: ${detalle}`;
                     } finally {
                         this.modalIA.cargando = false;
                     }
