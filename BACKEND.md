@@ -32,7 +32,7 @@ npx supabase db push
 
 Crea una API key en [Google AI Studio](https://aistudio.google.com/apikey). En Supabase Dashboard, abre Edge Functions > Secrets y agrega `GEMINI_API_KEY` junto con `APP_ORIGIN`. Guarda la clave directamente en el panel; no la pongas en `index.html`, `supabase-config.js`, GitHub ni mensajes. El nivel gratuito de Gemini tiene límites de uso y Google puede usar las solicitudes para mejorar sus productos; no envíes notas sensibles. Revisa los [precios y límites vigentes](https://ai.google.dev/gemini-api/docs/pricing).
 
-La app usa `gemini-2.5-flash` por defecto; `GEMINI_MODEL` es opcional. Para la app publicada, `APP_ORIGIN` debe ser `https://zulmafuertes-bot.github.io` (sin `/bitacora/`). La función permite un solo origen a la vez; cámbialo a `http://localhost:8000` solo durante pruebas locales. La generación de infografías requiere un modelo de imágenes de pago y queda desactivada.
+La app usa `gemini-2.5-flash` por defecto; `GEMINI_MODEL` es opcional. Para la app publicada, `APP_ORIGIN` debe ser `https://zulmafuertes-bot.github.io` (sin `/bitacora/`). La función permite un solo origen a la vez; cámbialo a `http://localhost:8000` solo durante pruebas locales. El botón **Infografía** arma un prompt local con la cita y las notas, para copiarlo y pegarlo manualmente en Gemini o ChatGPT; la app no solicita una imagen ni comparte esas notas por sí sola. El uso de imágenes depende de los límites y condiciones del servicio que elijas.
 
 ```powershell
 npx supabase functions deploy ai-study
@@ -54,6 +54,6 @@ Cada fila de `entries` guarda `created_by`, `updated_by`, `entry_date`, `type` y
 
 ## Privacidad y límites
 
-Las notas que envíes con los botones de IA se transmiten a Google Gemini. La función no las escribe en otra tabla y limita cada cuenta a 30 solicitudes diarias; las cuotas del nivel gratuito de Google pueden ser menores y generar errores de límite. La generación de imágenes está desactivada para evitar el modelo de pago. El uso de IA no elimina automáticamente las licencias de traducciones bíblicas: confirma que la fuente y versión seleccionadas permiten el uso que necesitas.
+Las notas que envíes con los botones de análisis se transmiten a Google Gemini. La función no las escribe en otra tabla y limita cada cuenta a 30 solicitudes diarias; las cuotas del nivel gratuito de Google pueden ser menores y generar errores de límite. El prompt de infografía solo se transmite al proveedor externo si lo pegas allí. El uso de IA no elimina automáticamente las licencias de traducciones bíblicas: confirma que la fuente y versión seleccionadas permiten el uso que necesitas.
 
 El respaldo JSON puede incluir oraciones y otra información personal. Guárdalo en un lugar privado. Los borradores sin guardar y las preferencias locales no se suben al historial compartido. Las etiquetas siguen siendo locales en esta primera versión.

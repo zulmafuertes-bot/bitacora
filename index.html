@@ -117,8 +117,12 @@
                 <img x-show="modalIA.imagen" :src="modalIA.imagen ? `data:image/png;base64,${modalIA.imagen}` : ''" alt="Infografía generada a partir del estudio" class="mt-3 max-h-[45vh] w-full rounded-xl object-contain">
                 <div x-show="modalIA.texto || modalIA.imagen" class="flex gap-2 mt-4">
                     <button @click="compartirResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-share-nodes mr-1"></i> Compartir</button>
-                    <button x-show="modalIA.texto" @click="copiarResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-copy mr-1"></i> Copiar texto</button>
+                    <button x-show="modalIA.texto" @click="copiarResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-copy mr-1"></i> <span x-text="modalIA.titulo === 'Prompt para infografía' ? 'Copiar prompt' : 'Copiar texto'"></span></button>
                     <a x-show="modalIA.imagen" :href="modalIA.imagen ? `data:image/png;base64,${modalIA.imagen}` : '# '" download="estudio-biblico.png" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-download mr-1"></i> Imagen</a>
+                </div>
+                <div x-show="modalIA.titulo === 'Prompt para infografía'" class="grid grid-cols-2 gap-2 mt-2">
+                    <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Abrir Gemini</a>
+                    <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Abrir ChatGPT</a>
                 </div>
             </div>
         </div>
@@ -686,7 +690,7 @@
                         <div>
                             <h2 class="text-lg font-bold">Cuenta y bitácora compartida</h2>
                             <p class="text-xs opacity-70" x-text="estadoBackend"></p>
-                            <p class="text-[10px] opacity-60 mt-1">Las funciones de IA envían el texto seleccionado a Gemini. En el nivel gratuito, Google puede usar las solicitudes para mejorar sus productos. No incluyas datos sensibles.</p>
+                            <p class="text-[10px] opacity-60 mt-1">Los análisis envían el texto seleccionado a Gemini; en el nivel gratuito, Google puede usar las solicitudes para mejorar sus productos. El prompt de infografía se arma aquí y solo sale si lo copias en Gemini o ChatGPT. No incluyas datos sensibles.</p>
                         </div>
                         <template x-if="!backendConfigurado">
                             <p class="p-3 rounded-xl bg-amber-500/10 text-xs">Para activar cuentas y sincronización, configura la URL y la clave pública de Supabase en <span class="font-mono">supabase-config.js</span>. Mientras tanto, la app sigue guardando localmente.</p>
@@ -1152,12 +1156,15 @@
                         return;
                     }
                     if (accion === 'infographic') {
+                        const contenido = contexto
+                            ? `Referencia bíblica o contexto: ${contexto.trim()}\n\nNotas aprendidas:\n${String(texto).trim()}`
+                            : `Notas aprendidas:\n${String(texto).trim()}`;
                         this.modalIA = {
                             open: true,
-                            titulo: 'Infografía no disponible',
+                            titulo: 'Prompt para infografía',
                             cargando: false,
-                            error: 'La generación de imágenes requiere un modelo de pago y está desactivada en esta configuración gratuita.',
-                            texto: '',
+                            error: '',
+                            texto: `Crea una infografía bíblica en español, clara y fácil de leer en un teléfono. Usa un título breve, una jerarquía visual ordenada y una paleta sobria. Resume las ideas principales y una aplicación práctica sin cambiar el sentido de las notas. Conserva exactamente las referencias bíblicas; no inventes versículos, citas ni datos.\n\n${contenido}\n\nEvita párrafos largos y texto decorativo ilegible.`,
                             imagen: null
                         };
                         return;
