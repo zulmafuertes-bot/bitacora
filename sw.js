@@ -1,9 +1,12 @@
-const CACHE_NAME = 'bitacora-v12';
+const CACHE_NAME = 'bitacora-v14';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './supabase-config.js'
+  './supabase-config.js',
+  './icon-180.png',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (e) => {
