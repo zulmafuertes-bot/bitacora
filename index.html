@@ -752,7 +752,7 @@
                                     <button @click="aceptarInvitacionSupabase()" type="button" :class="temaBotonSecundario" class="w-full py-2.5 rounded-xl border font-bold text-xs">Unirme con código</button>
                                 </div>
                                 <div x-show="espacioSupabase" class="space-y-2 border-t border-black/10 pt-3">
-                                    <label class="block text-[10px] font-bold uppercase opacity-60">Invitar a tu esposa por correo</label>
+                                    <label class="block text-[10px] font-bold uppercase opacity-60">Invitar por correo</label>
                                     <input type="email" x-model="correoInvitacion" placeholder="Correo de su cuenta" :class="temaInput" class="w-full p-2.5 rounded-xl border-0 ring-1 ring-inset ring-black/10 text-xs">
                                     <button @click="crearInvitacionSupabase()" type="button" :class="temaBotonSecundario" class="w-full py-2.5 rounded-xl border font-bold text-xs">Crear código de invitación</button>
                                     <div x-show="codigoInvitacionCreado" class="p-3 rounded-xl bg-black/5 break-all text-xs">
@@ -1165,7 +1165,7 @@
                         return;
                     }
                     await this.cargarEspacioSupabase();
-                    this.mensajeCuenta = 'Bitácora compartida creada. Invita a tu esposa con su correo.';
+                    this.mensajeCuenta = 'Bitácora compartida creada. Puedes invitar a otra persona por correo.';
                 },
                 async crearInvitacionSupabase() {
                     const { data, error } = await this.clienteSupabase.rpc('create_space_invite', {

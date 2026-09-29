@@ -57,8 +57,8 @@ La URL de retorno de la app ya está permitida en Supabase: `https://zulmafuerte
 
 1. Abre la app y crea el primer usuario o continúa con Google.
 2. Inicia sesión y pulsa **Crear nuestra bitácora compartida**.
-3. Escribe el correo de tu esposa y crea la invitación. La app genera un código de un solo uso que vence en siete días; compártelo por un canal privado.
-4. Tu esposa inicia con Google usando el Gmail invitado. Después pega el código para unirse.
+3. Escribe el correo de la persona y crea la invitación. La app genera un código de un solo uso que vence en siete días; compártelo por un canal privado.
+4. La persona invitada inicia con Google usando el Gmail invitado. Después pega el código para unirse.
 5. Antes de migrar, conserva el JSON de respaldo. En Ajustes, usa **Importar registros locales** para copiar el historial de este dispositivo al espacio. La importación omite duplicados; el JSON descargado sigue siendo otra copia de respaldo.
 
 Cada fila de `entries` guarda `created_by`, `updated_by`, `entry_date`, `type` y `data`. En el historial se muestra quién creó la entrada. Un miembro del espacio puede editar o borrar entradas compartidas; la atribución del autor original no se puede cambiar.
