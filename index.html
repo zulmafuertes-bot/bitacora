@@ -737,6 +737,9 @@
                                     <button @click="crearCuentaSupabase()" type="button" :class="temaBotonSecundario" class="py-2.5 rounded-xl border font-bold text-xs">Crear cuenta</button>
                                     <button @click="iniciarSesionSupabase()" type="button" :class="temaBotonGuardar" class="py-2.5 rounded-xl font-bold text-xs">Iniciar sesión</button>
                                 </div>
+                                <div class="flex items-center gap-3 py-1 text-[10px] opacity-50"><span class="h-px flex-1 bg-current"></span><span>o continúa con</span><span class="h-px flex-1 bg-current"></span></div>
+                                <button @click="iniciarSesionGoogle()" type="button" :class="temaBotonSecundario" class="w-full py-3 rounded-xl border font-bold text-sm"><i class="fa-brands fa-google mr-2"></i>Continuar con Google</button>
+                                <p class="text-[10px] opacity-60">Google creará tu usuario automáticamente si aún no existe.</p>
                             </div>
                         </template>
                         <template x-if="usuarioSupabase">
@@ -1139,6 +1142,17 @@
                 async iniciarSesionSupabase() {
                     const { error } = await this.clienteSupabase.auth.signInWithPassword({ email: this.authEmail.trim(), password: this.authPassword });
                     this.mensajeCuenta = error ? error.message : 'Sesión iniciada.';
+                },
+                async iniciarSesionGoogle() {
+                    try {
+                        const { error } = await this.clienteSupabase.auth.signInWithOAuth({
+                            provider: 'google',
+                            options: { redirectTo: new URL('./', window.location.href).href }
+                        });
+                        if (error) this.mensajeCuenta = `No se pudo iniciar con Google: ${error.message}`;
+                    } catch (error) {
+                        this.mensajeCuenta = `No se pudo iniciar con Google: ${error.message}`;
+                    }
                 },
                 async cerrarSesionSupabase() {
                     const { error } = await this.clienteSupabase.auth.signOut();

@@ -44,10 +44,21 @@ Para ejecución local de funciones, crea `supabase/functions/.env` basándote en
 
 ## 4. Crear y compartir la bitácora
 
-1. Abre la app desde el origen configurado, crea una cuenta con tu correo y confirma el mensaje de Supabase si la confirmación está activada.
+### Acceso con Google (Gmail)
+
+1. En [Google Cloud Console](https://console.cloud.google.com/), crea o selecciona un proyecto y configura **Google Auth Platform** (pantalla de consentimiento). Para probar en modo externo, agrega los dos Gmail como usuarios de prueba.
+2. Crea un cliente OAuth de tipo **Web application**. En **Authorized redirect URIs**, agrega exactamente `https://etiabkqqhxjezuzrrkrp.supabase.co/auth/v1/callback`.
+3. En Supabase, abre Authentication > Sign In / Providers > Google. Activa Google y pega allí el **Client ID** y el **Client Secret** de Google. Guárdalos solo en los paneles oficiales; no en el repositorio ni en esta conversación.
+4. La app ya permite **Continuar con Google**. El primer acceso crea automáticamente el usuario de Supabase; el segundo Gmail debe iniciar con su propia cuenta de Google.
+
+La URL de retorno de la app ya está permitida en Supabase: `https://zulmafuertes-bot.github.io/bitacora/`. Si pruebas en local, permite también `http://localhost:8000/`.
+
+### Compartir la bitácora
+
+1. Abre la app y crea el primer usuario o continúa con Google.
 2. Inicia sesión y pulsa **Crear nuestra bitácora compartida**.
 3. Escribe el correo de tu esposa y crea la invitación. La app genera un código de un solo uso que vence en siete días; compártelo por un canal privado.
-4. Ella debe crear su cuenta con ese mismo correo, confirmarla e iniciar sesión. Después pega el código para unirse.
+4. Tu esposa inicia con Google usando el Gmail invitado. Después pega el código para unirse.
 5. Antes de migrar, conserva el JSON de respaldo. En Ajustes, usa **Importar registros locales** para copiar el historial de este dispositivo al espacio. La importación omite duplicados; el JSON descargado sigue siendo otra copia de respaldo.
 
 Cada fila de `entries` guarda `created_by`, `updated_by`, `entry_date`, `type` y `data`. En el historial se muestra quién creó la entrada. Un miembro del espacio puede editar o borrar entradas compartidas; la atribución del autor original no se puede cambiar.
