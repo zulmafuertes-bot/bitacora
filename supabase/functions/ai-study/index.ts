@@ -122,10 +122,21 @@ Deno.serve(async (request: Request) => {
   }
 
   if (!geminiResponse.ok) {
-    if (geminiResponse.status === 429) {
-      return Response.json({ error: "Se alcanzó el límite gratuito de Gemini. Inténtalo más tarde." }, { status: 429, headers });
+    let providerMessage = "";
+    try {
+      const providerError = await geminiResponse.json();
+      providerMessage = typeof providerError?.error?.message === "string"
+        ? providerError.error.message.slice(0, 300)
+        : "";
+    } catch {
+      providerMessage = "";
     }
-    return Response.json({ error: "Gemini rechazó la solicitud. Revisa la clave y el acceso al modelo." }, { status: 502, headers });
+    if (geminiResponse.status === 429) {
+      const detail = providerMessage ? ` ${providerMessage}` : "";
+      return Response.json({ error: `Se alcanzó el límite gratuito de Gemini.${detail} Inténtalo más tarde.` }, { status: 429, headers });
+    }
+    const detail = providerMessage ? `: ${providerMessage}` : "";
+    return Response.json({ error: `Gemini devolvió HTTP ${geminiResponse.status}${detail}` }, { status: 502, headers });
   }
 
   const result = await geminiResponse.json();

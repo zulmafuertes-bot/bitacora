@@ -1786,19 +1786,25 @@
                         this.recognition.lang = 'es-ES';
 
                         let finalTranscript = '';
+                        let activePath = null;
                         this.recognition.onstart = () => {
-                            finalTranscript = this.getNestedValue(this, this.isListeningTo) || '';
-                            if (finalTranscript && !finalTranscript.endsWith(' ')) finalTranscript += ' ';
+                            if (activePath !== this.isListeningTo) {
+                                activePath = this.isListeningTo;
+                                finalTranscript = activePath ? String(this.getNestedValue(this, activePath) || '') : '';
+                                if (finalTranscript && !finalTranscript.endsWith(' ')) finalTranscript += ' ';
+                            }
                             this.mensajeDictado = '';
                         };
                         this.recognition.onresult = (e) => {
-                            if (!this.isListeningTo) return;
+                            if (!activePath) return;
                             let interim = '';
                             for (let i = e.resultIndex; i < e.results.length; ++i) {
-                                if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
+                                if (e.results[i].isFinal) {
+                                    finalTranscript = `${finalTranscript}${e.results[i][0].transcript}`.replace(/[ \t]{2,}/g, ' ');
+                                }
                                 else interim += e.results[i][0].transcript;
                             }
-                            this.setNestedValue(this, this.isListeningTo, finalTranscript + interim);
+                            this.setNestedValue(this, activePath, `${finalTranscript}${interim}`.replace(/[ \t]{2,}/g, ' '));
                         };
                         this.recognition.onerror = (e) => {
                             if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
@@ -1812,8 +1818,14 @@
                             }
                         };
                         this.recognition.onend = () => {
-                            if (this.isListeningTo) {
-                                this.setNestedValue(this, this.isListeningTo, finalTranscript.trimEnd());
+                            if (activePath) {
+                                const endedPath = activePath;
+                                this.setNestedValue(this, endedPath, finalTranscript.trimEnd().replace(/[ \t]{2,}/g, ' '));
+                                if (this.isListeningTo !== endedPath && !this.isListeningTo) {
+                                    activePath = null;
+                                    finalTranscript = '';
+                                    return;
+                                }
                                 this.programarReinicioDictado(300);
                             }
                         };
