@@ -1780,87 +1780,82 @@
                 },
 
                 // SPEECH RECOGNITION (DICTADO CONTINUO)
-                configurarReconocimientoVoz() {
-                    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                        this.recognition = new SpeechRecognition();
-                        this.recognition.continuous = true;
-                        this.recognition.interimResults = true;
-                        this.recognition.lang = 'es-ES';
+configurarReconocimientoVoz() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = true;
+        this.recognition.lang = 'es-ES';
 
-                        let finalTranscript = '';
-                        let activePath = null;
-                        this.recognition.onstart = () => {
-                            if (activePath !== this.isListeningTo) {
-                                activePath = this.isListeningTo;
-                                finalTranscript = activePath ? String(this.getNestedValue(this, activePath) || '') : '';
-                                if (finalTranscript && !finalTranscript.endsWith(' ')) finalTranscript += ' ';
-                            }
-                            this.mensajeDictado = '';
-                        };
-                        this.recognition.onresult = (e) => {
-                            if (!activePath) return;
-                            let interim = '';
-                            for (let i = e.resultIndex; i < e.results.length; ++i) {
-                                if (e.results[i].isFinal) {
-                                    finalTranscript = `${finalTranscript}${e.results[i][0].transcript}`.replace(/[ \t]{2,}/g, ' ');
-                                }
-                                else interim += e.results[i][0].transcript;
-                            }
-                            this.setNestedValue(this, activePath, `${finalTranscript}${interim}`.replace(/[ \t]{2,}/g, ' '));
-                        };
-                        this.recognition.onerror = (e) => {
-                            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                                this.isListeningTo = null;
-                                this.mensajeDictado = 'Permite el acceso al micrófono para usar el dictado.';
-                            } else if (e.error === 'audio-capture') {
-                                this.isListeningTo = null;
-                                this.mensajeDictado = 'No se encontró un micrófono disponible.';
-                            } else if (e.error === 'network') {
-                                this.mensajeDictado = 'Se interrumpió la conexión de voz; intentando reconectar…';
-                            }
-                        };
-                        this.recognition.onend = () => {
-                            if (activePath) {
-                                const endedPath = activePath;
-                                this.setNestedValue(this, endedPath, finalTranscript.trimEnd().replace(/[ \t]{2,}/g, ' '));
-                                if (this.isListeningTo !== endedPath && !this.isListeningTo) {
-                                    activePath = null;
-                                    finalTranscript = '';
-                                    return;
-                                }
-                                this.programarReinicioDictado(300);
-                            }
-                        };
-                    }
-                },
-                programarReinicioDictado(delay) {
-                    clearTimeout(this.recognitionRestartTimer);
-                    this.recognitionRestartTimer = setTimeout(() => {
-                        if (!this.isListeningTo) return;
-                        try {
-                            this.recognition.start();
-                        } catch (err) {
-                            this.programarReinicioDictado(500);
-                        }
-                    }, delay);
-                },
-                toggleDictation(path) {
-                    if (!this.recognition) {
-                        this.mensajeDictado = 'El dictado por voz no está disponible en este navegador.';
-                        return;
-                    }
-                    if (this.isListeningTo === path) {
-                        this.isListeningTo = null;
-                        clearTimeout(this.recognitionRestartTimer);
-                        this.recognition.stop();
-                    } else {
-                        this.isListeningTo = path;
-                        this.mensajeDictado = '';
-                        try { this.recognition.stop(); } catch(e) {}
-                        this.programarReinicioDictado(200);
-                    }
-                },
+        let activePath = null;
+        let textoBaseSesion = ''; // Reemplaza a finalTranscript
+
+        this.recognition.onstart = () => {
+            activePath = this.isListeningTo;
+            // CLAVE 1: Siempre tomar el valor real del input al encender o reiniciar el micrófono.
+            // Así respetamos si el usuario borró o escribió algo manualmente.
+            textoBaseSesion = activePath ? String(this.getNestedValue(this, activePath) || '') : '';
+            if (textoBaseSesion && !textoBaseSesion.endsWith(' ')) textoBaseSesion += ' ';
+            this.mensajeDictado = 'Escuchando...';
+        };
+
+        this.recognition.onresult = (e) => {
+            if (!activePath) return;
+            
+            let finalStr = '';
+            let interimStr = '';
+            
+            // Separar lo que ya es definitivo de lo que se está procesando
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+                if (e.results[i].isFinal) {
+                    finalStr += e.results[i][0].transcript;
+                } else {
+                    interimStr += e.results[i][0].transcript;
+                }
+            }
+
+            // CLAVE 2: Si hay texto final, lo sumamos a nuestra base consolidada
+            if (finalStr) {
+                textoBaseSesion = `${textoBaseSesion}${finalStr}`.replace(/[ \t]{2,}/g, ' ');
+                if (!textoBaseSesion.endsWith(' ')) textoBaseSesion += ' ';
+            }
+
+            // Inyectar al modelo: La base ya confirmada + lo que se está escuchando temporalmente
+            let textoMostrar = `${textoBaseSesion}${interimStr}`.replace(/[ \t]{2,}/g, ' ');
+            this.setNestedValue(this, activePath, textoMostrar);
+        };
+
+        this.recognition.onerror = (e) => {
+            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                this.isListeningTo = null;
+                this.mensajeDictado = 'Permite el acceso al micrófono para usar el dictado.';
+            } else if (e.error === 'audio-capture') {
+                this.isListeningTo = null;
+                this.mensajeDictado = 'No se encontró un micrófono disponible.';
+            } else if (e.error === 'network') {
+                this.mensajeDictado = 'Se interrumpió la conexión de voz; intentando reconectar…';
+            }
+        };
+
+        this.recognition.onend = () => {
+            if (activePath) {
+                // Limpiar espacios al final cuando el micrófono se detiene
+                let valorActual = String(this.getNestedValue(this, activePath) || '').trimEnd();
+                this.setNestedValue(this, activePath, valorActual);
+                
+                // Si el usuario apagó el micrófono manualmente
+                if (!this.isListeningTo) {
+                    activePath = null;
+                    return;
+                }
+                
+                // Si fue un apagón automático por silencio, reconectar
+                this.programarReinicioDictado(300);
+            }
+        };
+    }
+},
 
                 // UTILS
                 getNestedValue(obj, path) {
