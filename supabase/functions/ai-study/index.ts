@@ -100,7 +100,7 @@ Deno.serve(async (request: Request) => {
     return Response.json({ error: status === 429 ? "Daily AI limit reached" : "AI quota could not be checked" }, { status, headers });
   }
 
-  const model = Deno.env.get("GEMINI_MODEL") || "gemini-2.5-flash";
+  const model = Deno.env.get("GEMINI_MODEL") || "gemini-3.8-flash";
   const requestBody = {
     systemInstruction: { parts: [{ text: prompts[action] }] },
     contents: [{ role: "user", parts: [{ text }] }],
