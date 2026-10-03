@@ -28,19 +28,11 @@ npx supabase db push
 
 `db push` crea perfiles, espacios, invitaciones, registros, índices, funciones y políticas RLS a partir de `supabase/migrations/20260929000000_initial.sql`.
 
-## 3. Configurar Gemini y desplegar la función
+## 3. Usar Gemini o ChatGPT
 
-Crea una API key en [Google AI Studio](https://aistudio.google.com/apikey). En Supabase Dashboard, abre Edge Functions > Secrets y agrega `GEMINI_API_KEY` junto con `APP_ORIGIN`. Guarda la clave directamente en el panel; no la pongas en `index.html`, `supabase-config.js`, GitHub ni mensajes. El nivel gratuito de Gemini tiene límites de uso y Google puede usar las solicitudes para mejorar sus productos; no envíes notas sensibles. Revisa los [precios y límites vigentes](https://ai.google.dev/gemini-api/docs/pricing).
+Los botones de análisis e infografía preparan sus prompts en el dispositivo; la interfaz actual no necesita una API key ni desplegar la Edge Function `ai-study`. Elige **Usar Gemini** o **Usar ChatGPT** para copiar el prompt y abrir el enlace del proveedor. Si el celular tiene instalada la app y el sistema reconoce el enlace, puede abrirla; de lo contrario, continuará en el navegador. Pega el prompt en la conversación y, si quieres guardar la respuesta, cópiala de vuelta a la bitácora.
 
-La app usa `gemini-2.5-flash` por defecto; `GEMINI_MODEL` es opcional. Para la app publicada, `APP_ORIGIN` debe ser `https://zulmafuertes-bot.github.io` (sin `/bitacora/`). La función permite un solo origen a la vez; cámbialo a `http://localhost:8000` solo durante pruebas locales. El botón **Infografía** permite elegir formato, estilo visual y paleta; arma un prompt local con la cita y las notas para feed vertical, cuadrado, historia/Reel, horizontal, video o Pinterest. La app no solicita la imagen ni comparte esas notas por sí sola: copia el prompt y pégalo en Gemini o ChatGPT. El uso de imágenes depende de los límites y condiciones del servicio que elijas.
-
-```powershell
-npx supabase functions deploy ai-study
-```
-
-Supabase inyecta las variables `SUPABASE_URL` y la clave pública para el runtime de la función.
-
-Para ejecución local de funciones, crea `supabase/functions/.env` basándote en `supabase/functions/.env.example` y usa `npx supabase start` y `npx supabase functions serve ai-study`. El archivo real `.env` está excluido de Git. `supabase start` necesita Docker.
+La app no puede detectar por adelantado si la aplicación del proveedor está instalada ni enviarle el prompt automáticamente. El texto solo sale de la bitácora cuando eliges un proveedor y lo envías allí. Revisa las condiciones y límites de la cuenta del proveedor; no incluyas información sensible. La función `ai-study` y sus variables de entorno permanecen en el repositorio para despliegues anteriores, pero no son necesarias para este flujo.
 
 ## 4. Crear y compartir la bitácora
 
@@ -65,6 +57,6 @@ Cada fila de `entries` guarda `created_by`, `updated_by`, `entry_date`, `type` y
 
 ## Privacidad y límites
 
-Las notas que envíes con los botones de análisis se transmiten a Google Gemini. La función no las escribe en otra tabla y limita cada cuenta a 100 solicitudes diarias; las cuotas gratuitas de Gemini dependen del modelo, proyecto y nivel, y pueden ser menores. Google limita por proyecto y puede devolver un error `429` cuando se alcanza la cuota. El prompt de imagen solo se transmite al proveedor externo si lo pegas allí. El uso de IA no elimina automáticamente las licencias de traducciones bíblicas: confirma que la fuente y versión seleccionadas permiten el uso que necesitas.
+Los prompts se preparan localmente. Las notas solo se transmiten a Gemini o ChatGPT si eliges el proveedor y envías el prompt; desde ese momento se aplican las condiciones y límites de esa cuenta. El uso de IA no elimina automáticamente las licencias de traducciones bíblicas: confirma que la fuente y versión seleccionadas permiten el uso que necesitas.
 
 El respaldo JSON puede incluir oraciones y otra información personal. Guárdalo en un lugar privado. Los borradores sin guardar y las preferencias locales no se suben al historial compartido. Las etiquetas siguen siendo locales en esta primera versión.

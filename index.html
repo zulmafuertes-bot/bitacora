@@ -116,16 +116,31 @@
                 </div>
                 <p x-show="modalIA.cargando" class="text-sm opacity-70" role="status">Preparando el estudio…</p>
                 <p x-show="modalIA.error" x-text="modalIA.error" class="text-sm text-red-700" role="alert"></p>
+                <div x-show="modalIA.tipo === 'lexico'" class="order-2 shrink-0 space-y-2 mb-3">
+                    <label for="idioma-lexico" class="block text-[10px] font-bold uppercase opacity-60">Idioma del texto original</label>
+                    <select id="idioma-lexico" x-model="idiomaLexico" @change="actualizarPromptLexico()" :class="temaInput" class="w-full p-2.5 rounded-xl border-0 ring-1 ring-inset ring-black/10 focus:ring-2 text-xs">
+                        <option value="Hebreo bíblico">Hebreo bíblico</option>
+                        <option value="Arameo bíblico">Arameo bíblico</option>
+                        <option value="Hebreo y arameo (texto mixto)">Hebreo y arameo (texto mixto)</option>
+                        <option value="Griego koiné">Griego koiné</option>
+                    </select>
+                    <p class="text-[10px] opacity-60">Daniel 2:4–7:28 y Ezra 4:8–6:18, 7:12–26 contienen secciones arameas.</p>
+                </div>
                 <div x-show="modalIA.texto" x-text="modalIA.texto" class="flex-1 order-3 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed"></div>
                 <img x-show="modalIA.imagen" :src="modalIA.imagen ? `data:image/png;base64,${modalIA.imagen}` : ''" alt="Infografía generada a partir del estudio" class="mt-3 max-h-[45vh] w-full rounded-xl object-contain">
+                <p x-show="modalIA.mensaje" x-text="modalIA.mensaje" role="status" aria-live="polite" class="order-4 mt-3 text-xs text-amber-800"></p>
                 <div x-show="modalIA.texto || modalIA.imagen" class="order-4 flex gap-2 mt-4">
                     <button @click="compartirResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-share-nodes mr-1"></i> Compartir</button>
-                    <button x-show="modalIA.texto" @click="copiarResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-copy mr-1"></i> <span x-text="modalIA.titulo === 'Prompt para imagen Instagram' ? 'Copiar prompt' : 'Copiar texto'"></span></button>
+                    <button x-show="modalIA.texto" @click="copiarResultadoIA()" type="button" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs"><i class="fas fa-copy mr-1"></i> Copiar prompt</button>
                     <a x-show="modalIA.imagen" :href="modalIA.imagen ? `data:image/png;base64,${modalIA.imagen}` : '# '" download="estudio-biblico.png" class="flex-1 py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-download mr-1"></i> Imagen</a>
                 </div>
-                <div x-show="modalIA.titulo === 'Prompt para imagen Instagram'" class="order-5 grid grid-cols-2 gap-2 mt-2">
-                    <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Abrir Gemini</a>
-                    <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Abrir ChatGPT</a>
+                <div x-show="modalIA.texto" class="order-5 grid grid-cols-2 gap-2 mt-2">
+                    <a href="https://gemini.google.com/app" @click="copiarPromptProveedor()" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Usar Gemini</a>
+                    <a href="https://chatgpt.com/" @click="copiarPromptProveedor()" target="_blank" rel="noopener noreferrer" class="py-2.5 rounded-xl border border-black/10 font-bold text-xs text-center"><i class="fas fa-arrow-up-right-from-square mr-1"></i> Usar ChatGPT</a>
+                </div>
+                <div x-show="modalIA.tipo === 'lexico'" class="order-6 flex flex-wrap gap-3 mt-3 text-xs font-bold">
+                    <a :href="urlInterlinealOriginal()" target="_blank" rel="noopener noreferrer" class="text-amber-800 underline">Ver interlineal y léxico del pasaje</a>
+                    <a x-show="idiomaLexico.includes('Arameo')" href="https://cal.huc.edu/searching/CAL_search_page.html" target="_blank" rel="noopener noreferrer" class="text-amber-800 underline">Consultar léxico arameo CAL</a>
                 </div>
                 <div x-show="modalIA.titulo === 'Prompt para imagen Instagram'" class="order-2 shrink-0 space-y-3 mb-3 max-h-[34vh] overflow-y-auto pr-1">
                     <div>
@@ -245,6 +260,7 @@
                                 <button @click="solicitarIA('organize', lectura.aprendizaje, construirCitaLectura(lectura))" type="button" class="px-2.5 py-2 rounded-lg border border-black/10 text-[10px] font-bold">Organizar</button>
                                 <button @click="solicitarIA('rewrite', lectura.aprendizaje, construirCitaLectura(lectura))" type="button" class="px-2.5 py-2 rounded-lg border border-black/10 text-[10px] font-bold">Corregir redacción</button>
                                 <button @click="solicitarIA('exegesis', lectura.aprendizaje, construirCitaLectura(lectura))" type="button" class="px-2.5 py-2 rounded-lg border border-black/10 text-[10px] font-bold">Exégesis</button>
+                                <button @click="abrirEstudioLexico(lectura)" type="button" class="px-2.5 py-2 rounded-lg border border-black/10 text-[10px] font-bold"><i class="fas fa-language mr-1"></i>Palabras originales</button>
                                 <button @click="solicitarIA('theology', lectura.aprendizaje, construirCitaLectura(lectura))" type="button" class="px-2.5 py-2 rounded-lg border border-black/10 text-[10px] font-bold">Revisar teología</button>
                                 <button @click="solicitarIA('infographic', lectura.aprendizaje, construirCitaLectura(lectura))" type="button" class="px-2.5 py-2 rounded-lg border border-black/10 text-[10px] font-bold"><i class="fas fa-image mr-1"></i>Infografía</button>
                             </div>
@@ -502,6 +518,34 @@
                  ========================================== -->
             <div x-show="tab === 'historial'" x-transition.opacity.duration.300ms style="display: none;">
                 <div class="space-y-4">
+
+                    <div :class="temaTarjeta" class="p-4 rounded-2xl border space-y-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label for="rango-resumen" class="text-[10px] font-bold uppercase opacity-60">Periodo</label>
+                            <select id="rango-resumen" x-model="rangoResumen" @change="registrosSeleccionados = []" :class="temaInput" class="min-w-0 flex-1 p-2 rounded-xl border-0 ring-1 ring-inset ring-black/10 text-xs font-bold">
+                                <option value="semana">Esta semana</option>
+                                <option value="mes">Este mes</option>
+                                <option value="personalizado">Elegir fechas</option>
+                                <option value="todo">Todo el historial</option>
+                            </select>
+                        </div>
+                        <div x-show="rangoResumen === 'personalizado'" class="grid grid-cols-2 gap-2">
+                            <label class="text-[10px] font-bold uppercase opacity-60">Desde
+                                <input type="date" x-model="fechaInicioResumen" @change="registrosSeleccionados = []" :class="temaInput" class="mt-1 w-full p-2 rounded-xl border-0 ring-1 ring-inset ring-black/10 text-xs">
+                            </label>
+                            <label class="text-[10px] font-bold uppercase opacity-60">Hasta
+                                <input type="date" x-model="fechaFinResumen" @change="registrosSeleccionados = []" :class="temaInput" class="mt-1 w-full p-2 rounded-xl border-0 ring-1 ring-inset ring-black/10 text-xs">
+                            </label>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-[10px] opacity-60" x-text="periodoResumen.etiqueta"></p>
+                            <div class="flex gap-2">
+                                <button x-show="['todo', 'lectura', 'oracion', 'externo'].includes(filtroHistorial) || registrosSeleccionados.length" @click="seleccionarVisibles()" type="button" class="px-2.5 py-2 rounded-lg border border-black/10 text-[10px] font-bold" x-text="registrosSeleccionados.length ? 'Quitar selección' : 'Seleccionar visibles'"></button>
+                                <button @click="exportarResumenPdf()" type="button" :class="temaBotonGuardar" class="px-3 py-2 rounded-lg text-[10px] font-bold"><i class="fas fa-file-pdf mr-1"></i> PDF / Imprimir</button>
+                            </div>
+                        </div>
+                        <p x-show="mensajeResumen" x-text="mensajeResumen" role="status" aria-live="polite" class="text-xs text-amber-800"></p>
+                    </div>
                     
                     <!-- Barra de Búsqueda General en Tiempo Real -->
                     <div class="relative">
@@ -568,7 +612,13 @@
                                             <p class="text-[11px] opacity-60" x-text="formatearFechaCorta(item.fecha)"></p>
                                             <p x-show="item.created_by" class="text-[10px] opacity-50" x-text="`Registrado por ${nombreMiembro(item.created_by)}`"></p>
                                         </div>
-                                        <button @click="eliminarDelHistorial(item.id)" class="text-red-400/50 hover:text-red-500 p-1"><i class="fas fa-trash-alt text-xs"></i></button>
+                                        <div class="flex items-center gap-3">
+                                            <label class="flex items-center gap-1 text-[10px] opacity-60">
+                                                <input type="checkbox" :checked="registrosSeleccionados.includes(item.id)" @change="alternarSeleccionRegistro(item.id)" aria-label="Seleccionar registro para compartir">
+                                                <span>PDF</span>
+                                            </label>
+                                            <button @click="eliminarDelHistorial(item.id)" aria-label="Eliminar registro" class="text-red-400/50 hover:text-red-500 p-1"><i class="fas fa-trash-alt text-xs"></i></button>
+                                        </div>
                                     </div>
 
                                     <!-- Render Lectura -->
@@ -726,7 +776,7 @@
                         <div>
                             <h2 class="text-lg font-bold">Cuenta y bitácora compartida</h2>
                             <p class="text-xs opacity-70" x-text="estadoBackend"></p>
-                            <p class="text-[10px] opacity-60 mt-1">Los análisis envían el texto seleccionado a Gemini; en el nivel gratuito, Google puede usar las solicitudes para mejorar sus productos. El prompt de infografía se arma aquí y solo sale si lo copias en Gemini o ChatGPT. No incluyas datos sensibles.</p>
+                            <p class="text-[10px] opacity-60 mt-1">Los prompts se preparan en este dispositivo. Al abrir Gemini o ChatGPT y enviarlos, ese proveedor recibirá el texto; no incluyas datos sensibles.</p>
                         </div>
                         <template x-if="!backendConfigurado">
                             <p class="p-3 rounded-xl bg-amber-500/10 text-xs">Para activar cuentas y sincronización, configura la URL y la clave pública de Supabase en <span class="font-mono">supabase-config.js</span>. Mientras tanto, la app sigue guardando localmente.</p>
@@ -933,6 +983,11 @@
                 filtroHistorial: 'todo',
                 searchQuery: '',
                 filtroEtiquetaSel: null,
+                rangoResumen: 'mes',
+                fechaInicioResumen: `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`,
+                fechaFinResumen: new Date().toLocaleDateString('en-CA'),
+                registrosSeleccionados: [],
+                mensajeResumen: '',
 
                 // Sistema de Etiquetas Personalizadas
                 etiquetas: JSON.parse(localStorage.getItem('miBitacora_etiquetas')) || [
@@ -954,7 +1009,9 @@
 
                 // Modal Versículo
                 modalVersiculo: { open: false, cita: '', versionActiva: 'RV1960' },
-                modalIA: { open: false, titulo: '', cargando: false, error: '', texto: '', imagen: null },
+                modalIA: { open: false, tipo: '', titulo: '', cargando: false, error: '', mensaje: '', texto: '', imagen: null },
+                idiomaLexico: 'Hebreo bíblico',
+                entradaLexico: { libro: '', capitulo: '', versiculos: '', cita: '', notas: '' },
                 formatoImagenSeleccionado: 'Instagram feed vertical',
                 formatosImagen: [
                     { nombre: 'Instagram feed vertical', relacion: '4:5', resolucion: '1080 x 1350 px', destino: 'publicación vertical para el feed de Instagram' },
@@ -1007,6 +1064,8 @@
                 recognition: null,
                 isListeningTo: null,
                 recognitionRestartTimer: null,
+                recognitionRunning: false,
+                recognitionStarting: false,
                 mensajeDictado: '',
 
                 init() {
@@ -1221,7 +1280,7 @@
                     await this.cargarEspacioSupabase();
                     this.mensajeCuenta = `Migración completa: ${data} registros nuevos. Los repetidos se omitieron.`;
                 },
-                async solicitarIA(accion, texto, contexto = '') {
+                solicitarIA(accion, texto, contexto = '') {
                     const acciones = {
                         deepen: 'Profundizar en el estudio',
                         summarize: 'Resumen',
@@ -1231,57 +1290,58 @@
                         theology: 'Revisión teológica',
                         infographic: 'Infografía'
                     };
-                    if (!String(texto || '').trim()) {
+                    const instrucciones = {
+                        deepen: 'Responde en español. Ayuda a profundizar en este aprendizaje bíblico con observaciones del contexto literario e histórico, preguntas para reflexionar y aplicaciones prudentes. Separa claramente lo que dice el pasaje de las inferencias.',
+                        summarize: 'Resume en español estas notas de forma clara y fiel. Conserva las ideas y referencias bíblicas importantes y no añadas afirmaciones que no aparezcan en el texto.',
+                        organize: 'Organiza en español estas notas en tema central, observaciones, ideas relacionadas, referencias bíblicas y aplicación. Conserva el sentido original y marca cualquier inferencia.',
+                        rewrite: 'Corrige la redacción y ortografía en español. Mejora claridad y fluidez sin cambiar las ideas, el tono personal ni las referencias bíblicas.',
+                        exegesis: 'Prepara una ayuda de estudio exegético en español. Explica contexto literario e histórico, estructura, términos relevantes solo cuando puedas sustentarlos y distintas interpretaciones reconocidas. Distingue hechos, hipótesis y aplicaciones. No inventes datos de idiomas originales ni fuentes.',
+                        theology: 'Revisa este aprendizaje teológicamente en español. Compara cada afirmación con el contexto bíblico citado, indica acuerdos, tensiones y posibles interpretaciones alternativas. No declares certeza donde haya desacuerdo entre tradiciones e incluye referencias que convenga revisar. Esto es una ayuda de estudio, no una autoridad pastoral.'
+                    };
+                    const notas = String(texto || '').trim();
+                    if (!notas) {
                         this.mensajeGuardado = 'Escribe primero tus notas para poder analizarlas.';
                         return;
                     }
                     if (accion === 'infographic') {
-                        this.entradaInfografia = { contexto: String(contexto || '').trim(), texto: String(texto).trim() };
+                        this.entradaInfografia = { contexto: String(contexto || '').trim(), texto: notas };
                         this.modalIA = {
                             open: true,
                             titulo: 'Prompt para imagen Instagram',
                             cargando: false,
                             error: '',
+                            mensaje: '',
                             texto: '',
                             imagen: null
                         };
                         this.actualizarPromptInfografia();
                         return;
                     }
-                    this.modalIA = { open: true, titulo: acciones[accion] || 'Estudio con IA', cargando: true, error: '', texto: '', imagen: null };
-                    if (!this.clienteSupabase || !this.usuarioSupabase || !this.espacioSupabase) {
-                        this.modalIA.cargando = false;
-                        this.modalIA.error = 'Inicia sesión y conecta una bitácora compartida para usar la IA.';
+                    if (!instrucciones[accion]) {
+                        this.mensajeGuardado = 'Esta acción de estudio no está disponible.';
                         return;
                     }
 
-                    const entrada = contexto ? `${contexto}\n\n${texto}` : String(texto).trim();
+                    const referencia = String(contexto || '').trim();
+                    const contenido = referencia
+                        ? `Contexto o referencia:\n${referencia}\n\nNotas del estudio:\n${notas}`
+                        : `Notas del estudio:\n${notas}`;
+                    this.modalIA = {
+                        open: true,
+                        titulo: acciones[accion],
+                        cargando: false,
+                        error: '',
+                        mensaje: '',
+                        texto: `${instrucciones[accion]}\n\n${contenido}`,
+                        imagen: null
+                    };
+                },
+                async copiarPromptProveedor() {
                     try {
-                        const { data, error } = await this.clienteSupabase.functions.invoke('ai-study', {
-                            body: { action: accion, text: entrada, spaceId: this.espacioSupabase.id }
-                        });
-                        if (error) throw error;
-                        if (data?.error) throw new Error(data.error);
-                        this.modalIA.texto = data?.text || '';
-                        this.modalIA.imagen = data?.image || null;
-                        if (!this.modalIA.texto && !this.modalIA.imagen) this.modalIA.error = 'La IA no devolvió un resultado.';
+                        await navigator.clipboard.writeText(this.modalIA.texto);
+                        this.modalIA.mensaje = 'Prompt copiado. Pégalo en la conversación que se abrió.';
                     } catch (error) {
-                        let detalle = error.message || 'Error desconocido';
-                        const respuesta = error.context;
-                        if (respuesta && typeof respuesta.clone === 'function') {
-                            try {
-                                const cuerpo = await respuesta.clone().json();
-                                detalle = cuerpo.error || cuerpo.message || detalle;
-                            } catch {
-                                try {
-                                    const texto = await respuesta.clone().text();
-                                    if (texto) detalle = texto;
-                                } catch {}
-                            }
-                        }
-                        this.modalIA.error = `No se pudo completar la solicitud: ${detalle}`;
-                    } finally {
-                        this.modalIA.cargando = false;
+                        this.modalIA.mensaje = 'No se pudo copiar automáticamente. Selecciona el prompt y cópialo manualmente.';
                     }
                 },
                 actualizarPromptInfografia() {
@@ -1305,6 +1365,7 @@
                     try {
                         await navigator.clipboard.writeText(this.modalIA.texto);
                         this.mensajeGuardado = 'Resultado copiado.';
+                        this.modalIA.mensaje = 'Prompt copiado.';
                     } catch (error) {
                         this.modalIA.error = 'No se pudo copiar automáticamente. Selecciona el texto para copiarlo.';
                     }
@@ -1345,6 +1406,116 @@
                 },
                 eliminarEtiqueta(idx) {
                     this.etiquetas.splice(idx, 1);
+                },
+                alternarSeleccionRegistro(id) {
+                    this.registrosSeleccionados = this.registrosSeleccionados.includes(id)
+                        ? this.registrosSeleccionados.filter(registroId => registroId !== id)
+                        : [...this.registrosSeleccionados, id];
+                },
+                seleccionarVisibles() {
+                    const visibles = this.historialFiltrado.map(item => item.id);
+                    if (!visibles.length) {
+                        this.registrosSeleccionados = [];
+                        return;
+                    }
+                    const todosSeleccionados = visibles.every(id => this.registrosSeleccionados.includes(id));
+                    this.registrosSeleccionados = todosSeleccionados
+                        ? this.registrosSeleccionados.filter(id => !visibles.includes(id))
+                        : [...new Set([...this.registrosSeleccionados, ...visibles])];
+                },
+                obtenerRegistrosParaPdf() {
+                    if (this.registrosSeleccionados.length) {
+                        return this.historial.filter(item => this.registrosSeleccionados.includes(item.id));
+                    }
+
+                    let registros = this.historialDelPeriodo;
+                    if (['lectura', 'oracion', 'externo'].includes(this.filtroHistorial)) {
+                        registros = registros.filter(item => item.tipo === this.filtroHistorial);
+                    } else if (this.filtroHistorial === 'promesas') {
+                        registros = registros.filter(item => item.tipo === 'promesa' || (item.tipo === 'lectura' && item.data.some(lectura => lectura.promesaTexto || lectura.promesaLibro || lectura.esRhema)));
+                    } else if (['peticiones', 'preguntas', 'agradecimientos'].includes(this.filtroHistorial)) {
+                        const clave = { peticiones: 'peticiones', preguntas: 'preguntas', agradecimientos: 'agradecimientos' }[this.filtroHistorial];
+                        registros = registros.filter(item => item.tipo === 'oracion' && item.data[clave]?.length);
+                    }
+
+                    if (this.filtroEtiquetaSel) {
+                        const etiqueta = `[${this.filtroEtiquetaSel}]`.toLowerCase();
+                        registros = registros.filter(item => JSON.stringify(item.data).toLowerCase().includes(etiqueta));
+                    }
+                    if (this.searchQuery.trim()) {
+                        const consulta = this.searchQuery.toLowerCase();
+                        registros = registros.filter(item => JSON.stringify(item.data).toLowerCase().includes(consulta));
+                    }
+                    return registros;
+                },
+                detalleRegistroPdf(registro, escapar, campo) {
+                    const parrafo = (etiqueta, valor) => valor
+                        ? `<p><strong>${escapar(etiqueta)}:</strong> ${campo(valor)}</p>`
+                        : '';
+                    const lista = (etiqueta, valores, incluirRespuesta = false) => Array.isArray(valores) && valores.length
+                        ? `<h3>${escapar(etiqueta)}</h3><ul>${valores.map(valor => `<li>${campo(valor.texto)}${incluirRespuesta && valor.respuesta ? ` <em>(${campo(valor.respuesta)})</em>` : ''}</li>`).join('')}</ul>`
+                        : '';
+
+                    if (registro.tipo === 'lectura') {
+                        return (Array.isArray(registro.data) ? registro.data : []).map(lectura => `<section class="subentry">
+                            <h3>${escapar(this.construirCitaLectura(lectura))}</h3>
+                            ${parrafo('Aprendizaje', lectura.aprendizaje)}
+                            ${parrafo(this.construirCitaPromesa(lectura), lectura.promesaTexto)}
+                            ${lectura.esRhema ? '<p><strong>Versículo Rhema</strong></p>' : ''}
+                        </section>`).join('');
+                    }
+                    if (registro.tipo === 'oracion') {
+                        return `${parrafo('Oración', registro.data.general)}
+                            ${lista('Agradecimientos', registro.data.agradecimientos)}
+                            ${lista('Peticiones', registro.data.peticiones, true)}
+                            ${lista('Preguntas', registro.data.preguntas, true)}`;
+                    }
+                    if (registro.tipo === 'externo') {
+                        return `${parrafo('Fuente', registro.data.fuente)}
+                            ${parrafo('Título', registro.data.titulo)}
+                            ${parrafo('Autor', registro.data.autor)}
+                            ${parrafo('Notas', registro.data.notas)}`;
+                    }
+                    if (registro.tipo === 'promesa') {
+                        return `${parrafo('Cita', this.construirCitaPromesa(registro.data))}
+                            ${parrafo('Promesa', registro.data.promesaTexto)}
+                            ${registro.data.esRhema ? '<p><strong>Versículo Rhema</strong></p>' : ''}`;
+                    }
+                    return '';
+                },
+                exportarResumenPdf() {
+                    const registros = this.obtenerRegistrosParaPdf();
+                    if (!registros.length) {
+                        this.mensajeResumen = 'No hay registros para compartir con este rango y filtro.';
+                        return;
+                    }
+
+                    const ventana = window.open('', '_blank');
+                    if (!ventana) {
+                        this.mensajeResumen = 'Permite la ventana de impresión para preparar el PDF.';
+                        return;
+                    }
+
+                    const escapar = valor => String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                    })[caracter]);
+                    const campo = valor => escapar(valor).replace(/\r?\n/g, '<br>');
+                    const periodo = this.registrosSeleccionados.length
+                        ? `${registros.length} registro(s) seleccionado(s)`
+                        : this.periodoResumen.etiqueta;
+                    const entradas = registros.map(registro => `<article class="entry">
+                        <header><h2>${escapar(this.tipoLabel(registro.tipo))}</h2><time>${escapar(this.formatearFechaCorta(registro.fecha))}</time></header>
+                        ${this.detalleRegistroPdf(registro, escapar, campo)}
+                    </article>`).join('');
+
+                    ventana.document.open();
+                    ventana.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bitácora espiritual - ${escapar(periodo)}</title><style>
+                        @page{margin:18mm}*{box-sizing:border-box}body{font-family:Georgia,'Times New Roman',serif;color:#292524;line-height:1.55;margin:0}main{max-width:760px;margin:0 auto}h1{font-family:Arial,sans-serif;font-size:25px;margin:0}header.report{border-bottom:2px solid #a16207;padding-bottom:14px;margin-bottom:24px}header.report p{margin:5px 0 0;color:#57534e;font:13px Arial,sans-serif}.entry{break-inside:avoid;border-bottom:1px solid #d6d3d1;padding:0 0 18px;margin:0 0 20px}.entry>header{display:flex;justify-content:space-between;gap:16px;align-items:baseline}.entry h2{font: bold 16px Arial,sans-serif;margin:0;color:#78350f}.entry time{font:12px Arial,sans-serif;color:#78716c}.entry h3{font: bold 14px Arial,sans-serif;margin:12px 0 4px}.entry p,.entry li{font-size:14px;white-space:normal}.entry p{margin:6px 0}.entry ul{margin:4px 0;padding-left:22px}.subentry{margin-top:8px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+                    </style></head><body><main><header class="report"><h1>Bitácora Espiritual</h1><p>${escapar(periodo)} · ${registros.length} registro(s)</p><p>Generado el ${escapar(new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }))}</p></header>${entradas}</main></body></html>`);
+                    ventana.document.close();
+                    ventana.focus();
+                    setTimeout(() => ventana.print(), 400);
+                    this.mensajeResumen = 'En la ventana de impresión, elige Guardar como PDF para compartirlo.';
                 },
                 exportarRespaldo() {
                     const respaldo = {
@@ -1508,6 +1679,112 @@
                     if (lec.capitulo) cita += ` ${lec.capitulo}`;
                     if (lec.versiculos) cita += `:${lec.versiculos}`;
                     return cita;
+                },
+
+                sugerirIdiomaOriginal(lectura) {
+                    if (this.librosNT.includes(lectura.libro)) return 'Griego koiné';
+
+                    const capitulo = Number(lectura.capitulo);
+                    const rango = String(lectura.versiculos || '').match(/(\d+)(?:\s*[-–]\s*(\d+))?/);
+                    const inicio = rango ? Number(rango[1]) : null;
+                    const fin = rango ? Number(rango[2] || rango[1]) : null;
+                    let segmentos = [];
+
+                    if (lectura.libro === 'Daniel' && capitulo === 2) {
+                        segmentos = [[1, 3, 'Hebreo bíblico'], [4, 200, 'Arameo bíblico']];
+                    } else if (lectura.libro === 'Daniel' && capitulo >= 3 && capitulo <= 7) {
+                        segmentos = [[1, 200, 'Arameo bíblico']];
+                    } else if (lectura.libro === 'Esdras' && capitulo === 4) {
+                        segmentos = [[1, 7, 'Hebreo bíblico'], [8, 200, 'Arameo bíblico']];
+                    } else if (lectura.libro === 'Esdras' && capitulo === 5) {
+                        segmentos = [[1, 200, 'Arameo bíblico']];
+                    } else if (lectura.libro === 'Esdras' && capitulo === 6) {
+                        segmentos = [[1, 18, 'Arameo bíblico'], [19, 200, 'Hebreo bíblico']];
+                    } else if (lectura.libro === 'Esdras' && capitulo === 7) {
+                        segmentos = [[1, 11, 'Hebreo bíblico'], [12, 26, 'Arameo bíblico'], [27, 200, 'Hebreo bíblico']];
+                    }
+
+                    if (!segmentos.length) return 'Hebreo bíblico';
+                    const idiomas = new Set(segmentos
+                        .filter(([desde, hasta]) => inicio === null || (desde <= fin && hasta >= inicio))
+                        .map(([, , idioma]) => idioma));
+                    if (idiomas.size > 1) return 'Hebreo y arameo (texto mixto)';
+                    return idiomas.values().next().value || 'Hebreo bíblico';
+                },
+                slugLibroInterlineal(libro) {
+                    const slugs = {
+                        'Génesis': 'genesis', 'Éxodo': 'exodus', 'Levítico': 'leviticus', 'Números': 'numbers',
+                        'Deuteronomio': 'deuteronomy', 'Josué': 'joshua', 'Jueces': 'judges', 'Rut': 'ruth',
+                        '1 Samuel': '1_samuel', '2 Samuel': '2_samuel', '1 Reyes': '1_kings', '2 Reyes': '2_kings',
+                        '1 Crónicas': '1_chronicles', '2 Crónicas': '2_chronicles', 'Esdras': 'ezra', 'Nehemías': 'nehemiah',
+                        'Ester': 'esther', 'Job': 'job', 'Salmos': 'psalms', 'Proverbios': 'proverbs',
+                        'Eclesiastés': 'ecclesiastes', 'Cantares': 'songs', 'Isaías': 'isaiah', 'Jeremías': 'jeremiah',
+                        'Lamentaciones': 'lamentations', 'Ezequiel': 'ezekiel', 'Daniel': 'daniel', 'Oseas': 'hosea',
+                        'Joel': 'joel', 'Amós': 'amos', 'Abdías': 'obadiah', 'Jonás': 'jonah', 'Miqueas': 'micah',
+                        'Nahúm': 'nahum', 'Habacuc': 'habakkuk', 'Sofonías': 'zephaniah', 'Hageo': 'haggai',
+                        'Zacarías': 'zechariah', 'Malaquías': 'malachi', 'Mateo': 'matthew', 'Marcos': 'mark',
+                        'Lucas': 'luke', 'Juan': 'john', 'Hechos': 'acts', 'Romanos': 'romans',
+                        '1 Corintios': '1_corinthians', '2 Corintios': '2_corinthians', 'Gálatas': 'galatians',
+                        'Efesios': 'ephesians', 'Filipenses': 'philippians', 'Colosenses': 'colossians',
+                        '1 Tesalonicenses': '1_thessalonians', '2 Tesalonicenses': '2_thessalonians',
+                        '1 Timoteo': '1_timothy', '2 Timoteo': '2_timothy', 'Tito': 'titus', 'Filemón': 'philemon',
+                        'Hebreos': 'hebrews', 'Santiago': 'james', '1 Pedro': '1_peter', '2 Pedro': '2_peter',
+                        '1 Juan': '1_john', '2 Juan': '2_john', '3 Juan': '3_john', 'Judas': 'jude',
+                        'Apocalipsis': 'revelation'
+                    };
+                    return slugs[libro] || '';
+                },
+                urlInterlinealOriginal() {
+                    const libro = this.slugLibroInterlineal(this.entradaLexico.libro);
+                    const capitulo = String(this.entradaLexico.capitulo || '').trim();
+                    if (!libro || !/^\d+$/.test(capitulo)) return 'https://biblehub.com/interlinear/';
+
+                    const verso = String(this.entradaLexico.versiculos || '').match(/\d+/)?.[0];
+                    const ubicacion = verso ? `${capitulo}-${verso}` : capitulo;
+                    return `https://biblehub.com/interlinear/${libro}/${ubicacion}.htm`;
+                },
+                abrirEstudioLexico(lectura) {
+                    if (!lectura.libro || !/^\d+$/.test(String(lectura.capitulo || '').trim())) {
+                        this.mensajeGuardado = 'Selecciona un libro y capítulo para estudiar las palabras originales.';
+                        return;
+                    }
+
+                    this.entradaLexico = {
+                        libro: lectura.libro,
+                        capitulo: String(lectura.capitulo),
+                        versiculos: String(lectura.versiculos || '').trim(),
+                        cita: this.construirCitaLectura(lectura),
+                        notas: String(lectura.aprendizaje || '').trim()
+                    };
+                    this.idiomaLexico = this.sugerirIdiomaOriginal(lectura);
+                    this.modalIA = {
+                        open: true,
+                        tipo: 'lexico',
+                        titulo: 'Palabras relevantes del texto original',
+                        cargando: false,
+                        error: '',
+                        mensaje: '',
+                        texto: '',
+                        imagen: null
+                    };
+                    this.actualizarPromptLexico();
+                },
+                actualizarPromptLexico() {
+                    const { cita, notas } = this.entradaLexico;
+                    const incluyeArameo = this.idiomaLexico.includes('Arameo');
+                    const instruccionIdioma = this.idiomaLexico === 'Hebreo y arameo (texto mixto)'
+                        ? 'Separa las palabras hebreas de las arameas e identifica a qué tramo pertenece cada una; no mezcles sus formas ni sus léxicos.'
+                        : `Limita el análisis a ${this.idiomaLexico}.`;
+                    const fuente = incluyeArameo
+                        ? 'Verifica el pasaje en el interlineal y, para el léxico arameo, consulta CAL (Comprehensive Aramaic Lexicon).'
+                        : 'Verifica cada forma en el interlineal y léxico de Bible Hub para este pasaje.';
+                    this.modalIA.texto = [
+                        `Analiza ${cita}. ${instruccionIdioma} Selecciona entre 3 y 8 palabras realmente relevantes para comprender el pasaje; evita incluir palabras funcionales salvo que su función sea importante.`,
+                        'Para cada palabra presenta: forma exacta en el alfabeto original, transliteración académica indicando el sistema usado, pronunciación aproximada claramente marcada como aproximada, lema, forma y función gramatical, rango semántico documentado y sentido que tiene en este contexto.',
+                        'Distingue el significado contextual del rango completo de significados; no derives el sentido solo de la raíz ni presentes una etimología como prueba. Añade número de Strong o referencia lexicográfica solo si puedes verificarla y explica brevemente por qué la palabra aporta algo al pasaje.',
+                        `${fuente} No afirmes haber consultado una fuente si no tienes acceso a ella. Si no puedes verificar el texto original o una entrada, dilo y no inventes formas, pronunciaciones, morfología, números ni fuentes.`,
+                        notas ? `Notas del estudio para contextualizar la selección:\n${notas}` : 'No hay notas personales adicionales; basa la selección en el pasaje citado.'
+                    ].join('\n\n');
                 },
 
                 construirCitaPromesa(lec) {
@@ -1679,7 +1956,7 @@
                 // CONSULTAS CONSOLIDADAS Y FILTROS DEL HISTORIAL
                 obtenerPromesasConsolidadas() {
                     let promesas = [];
-                    this.historial.filter(h => h.tipo === 'promesa').forEach(h => {
+                    this.historialDelPeriodo.filter(h => h.tipo === 'promesa').forEach(h => {
                         promesas.push({
                             id: h.id,
                             fecha: h.fecha,
@@ -1689,7 +1966,7 @@
                             esRhema: h.data.esRhema
                         });
                     });
-                    this.historial.filter(h => h.tipo === 'lectura').forEach(h => {
+                    this.historialDelPeriodo.filter(h => h.tipo === 'lectura').forEach(h => {
                         if (Array.isArray(h.data)) {
                             h.data.forEach(lec => {
                                 if (lec.promesaTexto || lec.promesaLibro || lec.esRhema) {
@@ -1715,7 +1992,7 @@
                 },
                 obtenerPeticionesConsolidadas() {
                     let peticiones = [];
-                    this.historial.filter(h => h.tipo === 'oracion').forEach(h => {
+                    this.historialDelPeriodo.filter(h => h.tipo === 'oracion').forEach(h => {
                         if (h.data.peticiones) {
                             h.data.peticiones.forEach(p => peticiones.push({ ...p, historialId: h.id, fecha: h.fecha, autorId: h.created_by }));
                         }
@@ -1754,7 +2031,7 @@
                 },
                 obtenerPreguntasConsolidadas() {
                     let preguntas = [];
-                    this.historial.filter(h => h.tipo === 'oracion').forEach(h => {
+                    this.historialDelPeriodo.filter(h => h.tipo === 'oracion').forEach(h => {
                         if (h.data.preguntas) {
                             h.data.preguntas.forEach(pr => preguntas.push({ ...pr, fecha: h.fecha, autorId: h.created_by }));
                         }
@@ -1767,7 +2044,7 @@
                 },
                 obtenerAgradecimientosConsolidados() {
                     let agradecimientos = [];
-                    this.historial.filter(h => h.tipo === 'oracion').forEach(h => {
+                    this.historialDelPeriodo.filter(h => h.tipo === 'oracion').forEach(h => {
                         if (h.data.agradecimientos) {
                             h.data.agradecimientos.forEach(ag => agradecimientos.push({ ...ag, fecha: h.fecha, autorId: h.created_by }));
                         }
@@ -1780,82 +2057,137 @@
                 },
 
                 // SPEECH RECOGNITION (DICTADO CONTINUO)
-configurarReconocimientoVoz() {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.recognition = new SpeechRecognition();
-        this.recognition.continuous = true;
-        this.recognition.interimResults = true;
-        this.recognition.lang = 'es-ES';
+                toggleDictation(path) {
+                    if (!this.recognition) {
+                        this.mensajeDictado = 'El dictado por voz no está disponible en este navegador.';
+                        return;
+                    }
 
-        let activePath = null;
-        let textoBaseSesion = ''; // Reemplaza a finalTranscript
+                    if (this.isListeningTo === path) {
+                        this.isListeningTo = null;
+                        clearTimeout(this.recognitionRestartTimer);
+                        this.recognitionRestartTimer = null;
+                        if (this.recognitionRunning || this.recognitionStarting) {
+                            try {
+                                this.recognition.stop();
+                            } catch (error) {
+                                this.recognitionRunning = false;
+                                this.recognitionStarting = false;
+                            }
+                        }
+                        return;
+                    }
 
-        this.recognition.onstart = () => {
-            activePath = this.isListeningTo;
-            // CLAVE 1: Siempre tomar el valor real del input al encender o reiniciar el micrófono.
-            // Así respetamos si el usuario borró o escribió algo manualmente.
-            textoBaseSesion = activePath ? String(this.getNestedValue(this, activePath) || '') : '';
-            if (textoBaseSesion && !textoBaseSesion.endsWith(' ')) textoBaseSesion += ' ';
-            this.mensajeDictado = 'Escuchando...';
-        };
+                    const sessionActive = this.recognitionRunning || this.recognitionStarting;
+                    this.isListeningTo = path;
+                    clearTimeout(this.recognitionRestartTimer);
+                    this.recognitionRestartTimer = null;
 
-        this.recognition.onresult = (e) => {
-            if (!activePath) return;
-            
-            let finalStr = '';
-            let interimStr = '';
-            
-            // Separar lo que ya es definitivo de lo que se está procesando
-            for (let i = e.resultIndex; i < e.results.length; ++i) {
-                if (e.results[i].isFinal) {
-                    finalStr += e.results[i][0].transcript;
-                } else {
-                    interimStr += e.results[i][0].transcript;
-                }
-            }
+                    if (sessionActive) {
+                        try {
+                            this.recognition.stop();
+                        } catch (error) {
+                            this.recognitionRunning = false;
+                            this.recognitionStarting = false;
+                            this.programarReinicioDictado(300);
+                        }
+                    } else {
+                        this.programarReinicioDictado(0);
+                    }
+                },
+                programarReinicioDictado(delay) {
+                    if (!this.recognition || !this.isListeningTo) return;
+                    clearTimeout(this.recognitionRestartTimer);
+                    this.recognitionRestartTimer = setTimeout(() => {
+                        this.recognitionRestartTimer = null;
+                        if (!this.isListeningTo || this.recognitionRunning || this.recognitionStarting) return;
 
-            // CLAVE 2: Si hay texto final, lo sumamos a nuestra base consolidada
-            if (finalStr) {
-                textoBaseSesion = `${textoBaseSesion}${finalStr}`.replace(/[ \t]{2,}/g, ' ');
-                if (!textoBaseSesion.endsWith(' ')) textoBaseSesion += ' ';
-            }
+                        this.recognitionStarting = true;
+                        try {
+                            this.recognition.start();
+                        } catch (error) {
+                            this.recognitionStarting = false;
+                            if (error.name === 'InvalidStateError') {
+                                this.programarReinicioDictado(300);
+                            } else {
+                                this.isListeningTo = null;
+                                this.mensajeDictado = 'No se pudo iniciar el dictado por voz.';
+                            }
+                        }
+                    }, delay);
+                },
+                configurarReconocimientoVoz() {
+                    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) return;
 
-            // Inyectar al modelo: La base ya confirmada + lo que se está escuchando temporalmente
-            let textoMostrar = `${textoBaseSesion}${interimStr}`.replace(/[ \t]{2,}/g, ' ');
-            this.setNestedValue(this, activePath, textoMostrar);
-        };
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = true;
+                    this.recognition.interimResults = true;
+                    this.recognition.lang = 'es-ES';
 
-        this.recognition.onerror = (e) => {
-            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                this.isListeningTo = null;
-                this.mensajeDictado = 'Permite el acceso al micrófono para usar el dictado.';
-            } else if (e.error === 'audio-capture') {
-                this.isListeningTo = null;
-                this.mensajeDictado = 'No se encontró un micrófono disponible.';
-            } else if (e.error === 'network') {
-                this.mensajeDictado = 'Se interrumpió la conexión de voz; intentando reconectar…';
-            }
-        };
+                    let activePath = null;
+                    let textoBaseSesion = '';
+                    let textoFinalSesion = '';
 
-        this.recognition.onend = () => {
-            if (activePath) {
-                // Limpiar espacios al final cuando el micrófono se detiene
-                let valorActual = String(this.getNestedValue(this, activePath) || '').trimEnd();
-                this.setNestedValue(this, activePath, valorActual);
-                
-                // Si el usuario apagó el micrófono manualmente
-                if (!this.isListeningTo) {
-                    activePath = null;
-                    return;
-                }
-                
-                // Si fue un apagón automático por silencio, reconectar
-                this.programarReinicioDictado(300);
-            }
-        };
-    }
-},
+                    this.recognition.onstart = () => {
+                        this.recognitionRunning = true;
+                        this.recognitionStarting = false;
+                        activePath = this.isListeningTo;
+                        textoBaseSesion = activePath ? String(this.getNestedValue(this, activePath) || '').trimEnd() : '';
+                        textoFinalSesion = '';
+                        this.mensajeDictado = activePath ? 'Escuchando...' : 'Dictado detenido.';
+                        if (!activePath) this.recognition.stop();
+                    };
+
+                    this.recognition.onresult = (event) => {
+                        if (!activePath) return;
+
+                        const finales = [];
+                        const intermedios = [];
+                        for (let index = 0; index < event.results.length; index++) {
+                            const resultado = event.results[index];
+                            const transcripcion = resultado[0]?.transcript?.trim();
+                            if (!transcripcion) continue;
+                            (resultado.isFinal ? finales : intermedios).push(transcripcion);
+                        }
+
+                        textoFinalSesion = finales.join(' ');
+                        const textoMostrar = [textoBaseSesion, textoFinalSesion, intermedios.join(' ')]
+                            .filter(Boolean)
+                            .join(' ')
+                            .replace(/[ \t]{2,}/g, ' ');
+                        this.setNestedValue(this, activePath, textoMostrar);
+                    };
+
+                    this.recognition.onerror = (event) => {
+                        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                            this.isListeningTo = null;
+                            this.mensajeDictado = 'Permite el acceso al micrófono para usar el dictado.';
+                        } else if (event.error === 'audio-capture') {
+                            this.isListeningTo = null;
+                            this.mensajeDictado = 'No se encontró un micrófono disponible.';
+                        } else if (event.error === 'network') {
+                            this.mensajeDictado = 'Se interrumpió la conexión de voz; intentando reconectar…';
+                        }
+                    };
+
+                    this.recognition.onend = () => {
+                        this.recognitionRunning = false;
+                        this.recognitionStarting = false;
+                        if (!activePath) return;
+
+                        const textoFinal = [textoBaseSesion, textoFinalSesion].filter(Boolean).join(' ').trimEnd();
+                        this.setNestedValue(this, activePath, textoFinal);
+                        if (!this.isListeningTo) {
+                            activePath = null;
+                            this.mensajeDictado = 'Dictado detenido.';
+                            return;
+                        }
+
+                        this.mensajeDictado = 'Reconectando el dictado…';
+                        this.programarReinicioDictado(300);
+                    };
+                },
 
                 // UTILS
                 getNestedValue(obj, path) {
@@ -1866,6 +2198,11 @@ configurarReconocimientoVoz() {
                     const last = parts.pop();
                     const target = parts.reduce((acc, part) => acc && acc[part], obj);
                     if (target) target[last] = value;
+                },
+                fechaClaveLocal(valor) {
+                    const fecha = valor instanceof Date ? valor : new Date(valor);
+                    if (!Number.isFinite(fecha.getTime())) return '';
+                    return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
                 },
                 formatearFechaCorta(isoString) {
                     return new Date(isoString).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -1883,9 +2220,51 @@ configurarReconocimientoVoz() {
                     return new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
                 },
 
+                get periodoResumen() {
+                    const fechaClave = fecha => this.fechaClaveLocal(fecha);
+                    const fechaLegible = clave => new Date(`${clave}T12:00:00`).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                    let inicio = '';
+                    let fin = '';
+                    let etiqueta = 'Todo el historial';
+
+                    if (this.rangoResumen === 'semana') {
+                        const lunes = new Date();
+                        lunes.setHours(12, 0, 0, 0);
+                        lunes.setDate(lunes.getDate() - (lunes.getDay() + 6) % 7);
+                        const domingo = new Date(lunes);
+                        domingo.setDate(domingo.getDate() + 6);
+                        inicio = fechaClave(lunes);
+                        fin = fechaClave(domingo);
+                        etiqueta = `Semana del ${fechaLegible(inicio)} al ${fechaLegible(fin)}`;
+                    } else if (this.rangoResumen === 'mes') {
+                        const hoy = new Date();
+                        const primero = new Date(hoy.getFullYear(), hoy.getMonth(), 1, 12);
+                        const ultimo = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 12);
+                        inicio = fechaClave(primero);
+                        fin = fechaClave(ultimo);
+                        etiqueta = primero.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                    } else if (this.rangoResumen === 'personalizado') {
+                        inicio = this.fechaInicioResumen;
+                        fin = this.fechaFinResumen;
+                        if (!inicio || !fin || inicio > fin) return { inicio, fin, valido: false, etiqueta: 'Selecciona un rango de fechas válido' };
+                        etiqueta = `Del ${fechaLegible(inicio)} al ${fechaLegible(fin)}`;
+                    }
+
+                    return { inicio, fin, valido: true, etiqueta };
+                },
+                get historialDelPeriodo() {
+                    const periodo = this.periodoResumen;
+                    if (!periodo.valido) return [];
+                    if (!periodo.inicio && !periodo.fin) return this.historial;
+                    return this.historial.filter(item => {
+                        const fecha = this.fechaClaveLocal(item.fecha);
+                        return fecha && fecha >= periodo.inicio && fecha <= periodo.fin;
+                    });
+                },
+
                 // HISTORIAL FILTRADO DINÁMICO CON BÚSQUEDA Y ETIQUETA
                 get historialFiltrado() {
-                    let items = this.historial;
+                    let items = this.historialDelPeriodo;
 
                     if (this.filtroHistorial !== 'todo') {
                         items = items.filter(item => item.tipo === this.filtroHistorial);
